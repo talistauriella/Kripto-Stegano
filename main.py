@@ -4,12 +4,13 @@ from streamlit_option_menu import option_menu
 from io import BytesIO
 from PIL import Image, ImageOps
 import docx2txt
+from docx import Document
 
 
 
 st.set_page_config(
         page_title="STEGO~",
-        page_icon=":dinosaurs",
+        page_icon=":key",
         #layout="wide",
         initial_sidebar_state="auto",
         menu_items={
@@ -41,9 +42,10 @@ if(selected=="Home"):
 elif(selected=="Halaman 1"):
     st.title("Halaman 1")
     # Membuat komponen untuk mengunggah file dengan dukungan untuk beberapa file.
-    uploaded_file = st.file_uploader("Pilih file (docx atau png)", 
-                                    type=["docx", "png"],
+    uploaded_file = st.file_uploader("Pilih file (docx atau jpg)", 
+                                    type=["docx", "jpg"],
                                     accept_multiple_files=False)
+
     def process_uploaded_file(uploaded_file):
         # Memeriksa apakah file telah diunggah
         if uploaded_file is not None:
@@ -52,12 +54,12 @@ elif(selected=="Halaman 1"):
                 text_data = docx2txt.process(uploaded_file)
                 st.write("Data teks dari dokumen Word (docx):")
                 st.write(text_data)
-            elif uploaded_file.type == "image/png":  # Mengecek jika file adalah png
-                # Menggunakan PIL untuk memuat dan menampilkan gambar PNG
+            elif uploaded_file.type == "image/jpeg" or uploaded_file.type == "image/jpg": # Mengecek jika file adalah jpg
+                # Menggunakan PIL untuk memuat dan menampilkan gambar JPG
                 image = Image.open(uploaded_file)
                 st.image(image, caption="Gambar yang diunggah", use_column_width=True)
             else:
-                st.write("Tipe file tidak didukung. Harap pilih file dengan tipe docx atau png.")
+                st.write("Tipe file tidak didukung. Harap pilih file dengan tipe docx atau jpg.")
 
     if st.button("Submit"):
         # Memeriksa apakah file telah diunggah
@@ -68,20 +70,19 @@ elif(selected=="Halaman 1"):
             st.write("Silakan pilih file sebelum menekan tombol Submit.")
 elif(selected=="Halaman 2"):
     st.title("Halaman 2")
-        # Membuat komponen untuk mengunggah file dengan dukungan untuk beberapa file.
-    uploaded_file = st.file_uploader("Pilih file PNG", 
-                                    type=["png"],
+    # Membuat komponen untuk mengunggah file dengan dukungan untuk beberapa file.
+    uploaded_file = st.file_uploader("Pilih file JPG", 
+                                    type=["jpg"],
                                     accept_multiple_files=False)
     def process_uploaded_file(uploaded_file):
         # Memeriksa apakah file telah diunggah
         if uploaded_file is not None:
-            if uploaded_file.type == "image/png":  # Mengecek jika file adalah png
-                # Menggunakan PIL untuk memuat dan menampilkan gambar PNG
+            if uploaded_file.type == "image/jpeg" or uploaded_file.type == "image/jpg":  # Mengecek jika file adalah jpg
+                # Menggunakan PIL untuk memuat dan menampilkan gambar JPG
                 image = Image.open(uploaded_file)
                 st.image(image, caption="Gambar yang diunggah", use_column_width=True)
             else:
-                st.write("Tipe file tidak didukung. Harap pilih file dengan tipe png.")
-
+                st.write("Tipe file tidak didukung. Harap pilih file dengan tipe jpg.")
     if st.button("Submit"):
         # Memeriksa apakah file telah diunggah
         if uploaded_file is not None:
