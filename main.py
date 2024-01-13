@@ -7,8 +7,10 @@ import docx2txt
 from docx import Document
 import base64
 
-
+png_file_path =""
+word_file_path = ""
 def embed_text_to_image(text, image_path, output_path):
+    global png_file_path,word_file_path
     # Code from RGB to Binary
     def rgb_to_binary(rgb):
         return ''.join(format(value, '08b') for value in rgb)
@@ -41,7 +43,6 @@ def embed_text_to_image(text, image_path, output_path):
             print(f"Error: {e}")
             return None
     
-    png_file_path = 'D:/steganografi/test.png'
     png_binary = extracting_image_rgb(png_file_path)
     resolution = get_png_resolution(png_file_path)
 
@@ -67,12 +68,11 @@ def embed_text_to_image(text, image_path, output_path):
         binary_data = ''.join(format(ord(char), '08b') for char in text)
         return binary_data
 
-    word_file_path = 'D:/steganografi/example.docx'
     word_text = read_docx(word_file_path)
     word_binary = text_to_binary(word_text)
 
     # Extract binary from image
-    png_binary = extracting_image_rgb(image_path)
+    png_binary = extracting_image_rgb(image_path) #ini kenapa
 
     # Extract binary from Word document
     word_text = read_docx(text)
@@ -122,48 +122,48 @@ def embed_text_to_image(text, image_path, output_path):
     image.save(output_path)
 
 #Halaman 2
-    # # Function to convert binary to text
-    # def binary_to_text(binary_string):
-    #     text = ''.join(chr(int(binary_string[i:i + 8], 2)) for i in range(0, len(binary_string), 8))
-    #     return text
+    # Function to convert binary to text
+    def binary_to_text(binary_string):
+        text = ''.join(chr(int(binary_string[i:i + 8], 2)) for i in range(0, len(binary_string), 8))
+        return text
     
-    # # Function to embed text into an image
-    # def embed_text_to_image(text, image_path, output_path):
-    #     binary_text = ''.join(format(ord(char), '08b') for char in text)
-    #     png_binary = extracting_image_rgb(image_path)
+    # Function to embed text into an image
+    def embed_text_to_image(text, image_path, output_path):
+        binary_text = ''.join(format(ord(char), '08b') for char in text)
+        png_binary = extracting_image_rgb(image_path)
 
-    #     new_png_binary = []
-    #     length_png = len(png_binary)
-    #     length_text = len(binary_text)
+        new_png_binary = []
+        length_png = len(png_binary)
+        length_text = len(binary_text)
 
-    #     for i in range(length_text):
-    #         str_png_binary = png_binary[i]
-    #         new_binary = str_png_binary[:-1] + binary_text[i]
-    #         new_png_binary.append(new_binary)
+        for i in range(length_text):
+            str_png_binary = png_binary[i]
+            new_binary = str_png_binary[:-1] + binary_text[i]
+            new_png_binary.append(new_binary)
 
-    #     for i in range(length_text, length_png):
-    #         new_png_binary.append(png_binary[i])
+        for i in range(length_text, length_png):
+            new_png_binary.append(png_binary[i])
 
-    #     rgb_values = []
-    #     dum_list = []
+        rgb_values = []
+        dum_list = []
 
-    #     for i in range(0, len(new_png_binary), 3):
-    #         dum_list = []
-    #         for j in range(3):
-    #             dum_list.append(int(new_png_binary[i + j], 2))
-    #         rgb_values.append(dum_list)
+        for i in range(0, len(new_png_binary), 3):
+            dum_list = []
+            for j in range(3):
+                dum_list.append(int(new_png_binary[i + j], 2))
+            rgb_values.append(dum_list)
 
-    #     pixel_data = [value for rgb_list in rgb_values for value in rgb_list]
+        pixel_data = [value for rgb_list in rgb_values for value in rgb_list]
 
-    #     image = Image.new('RGB', (400, 400))
-    #     pixels = image.load()
+        image = Image.new('RGB', (400, 400))
+        pixels = image.load()
 
-    #     for y in range(400):
-    #         for x in range(400):
-    #             pixel_index = y * 400 * 3 + x * 3
-    #             pixels[x, y] = (pixel_data[pixel_index], pixel_data[pixel_index + 1], pixel_data[pixel_index + 2])
+        for y in range(400):
+            for x in range(400):
+                pixel_index = y * 400 * 3 + x * 3
+                pixels[x, y] = (pixel_data[pixel_index], pixel_data[pixel_index + 1], pixel_data[pixel_index + 2])
 
-    #     image.save(output_path)
+        image.save(output_path)
     # Code from PNG to Binary
 def rgb_to_binary(rgb):
     return ''.join(format(value, '08b') for value in rgb)
@@ -260,7 +260,8 @@ elif(selected=="Halaman 1"):
                 # Save image and text to temporary files
                 temp_image_path = "temp_image.jpg" or "temp_image.png"
                 temp_text_path = "temp_text.docx"
-
+                png_file_path = "temp_image.jpg"
+                word_file_path ="temp_text.docx"
                 with open(temp_image_path, "wb") as temp_image_file:
                     temp_image_file.write(uploaded_image.read())
 
