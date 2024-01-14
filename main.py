@@ -72,7 +72,7 @@ def embed_text_to_image(text, image_path, output_path):
     word_binary = text_to_binary(word_text)
 
     # Extract binary from image
-    png_binary = extracting_image_rgb(image_path) #ini kenapa
+    png_binary = extracting_image_rgb(image_path)
 
     # Extract binary from Word document
     word_text = read_docx(text)
