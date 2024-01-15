@@ -302,6 +302,9 @@ if(selected=="Home"):
 
 elif(selected=="Halaman 1"):
     st.title("Halaman 1")
+    st.markdown("Penyisipan setiap isi teks pada file DOCX (dalam bentuk binary) ke dalam setiap pixel pada file PNG atau JPG")
+    st.markdown("***Input File PNG atau JPG dan File DOCX***")
+
     # Membuat komponen untuk mengunggah file dengan dukungan untuk beberapa file.
     uploaded_image = st.file_uploader("Pilih file Foto", type=["jpg", "png"], accept_multiple_files=False)
     uploaded_text = st.file_uploader("Pilih file DOCX", type=["docx"], accept_multiple_files=False)
@@ -370,6 +373,8 @@ elif(selected=="Halaman 1"):
 
 elif(selected=="Halaman 2"):
     st.title("Halaman 2")
+    st.markdown("Mengekstrak kembali isi dari file PNG atau JPG yang telah disisipkan")
+    st.markdown("***Input File PNG atau JPG yang telah diunduh dari halaman 1***")
     uploaded_file = st.file_uploader("Pilih file JPG or PNG", type=["jpg","png"], accept_multiple_files=False)
     try:
         if st.button("Submit"):
