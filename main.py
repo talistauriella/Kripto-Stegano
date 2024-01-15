@@ -281,9 +281,9 @@ st.set_page_config(
 )
 
 with st.sidebar:
-    selected = option_menu("Main Menu", ["Home", "Halaman 1", "Halaman 2"],
-    icons=['house', 'gear', 'key'], menu_icon="cast", default_index=0)
-if(selected=="Home"):
+    selected = option_menu("Main Menu", ["About", "Penyisipan", "Pengekstrakan"],
+    icons=['house', 'gear', 'key'], menu_icon="cast", default_index=1)
+if(selected=="About"):
     st.title("About Steganografi Paper")
     st.caption("Ini adalah halaman utama web")
     st.text_area("Definisi Steganografi",
@@ -300,7 +300,7 @@ if(selected=="Home"):
     st.markdown("2. Menggunakan LSB untuk menyisipkan setiap digit bit text ke Image")
     st.markdown("3. Menciptakan kembali Image yang telah disisipi bit di akhir bitnya")
 
-elif(selected=="Halaman 1"):
+elif(selected=="Penyisipan"):
     st.title("Halaman 1")
     st.markdown("Penyisipan setiap isi teks pada file DOCX (dalam bentuk binary) ke dalam setiap pixel pada file PNG atau JPG")
     st.markdown("***Input File PNG atau JPG dan File DOCX***")
@@ -371,7 +371,7 @@ elif(selected=="Halaman 1"):
             else:
                 st.write("Tipe file tidak didukung. Harap pilih file dengan tipe docx atau jpg.")
 
-elif(selected=="Halaman 2"):
+elif(selected=="Pengekstrakan"):
     st.title("Halaman 2")
     st.markdown("Mengekstrak kembali isi dari file PNG atau JPG yang telah disisipkan")
     st.markdown("***Input File PNG atau JPG yang telah diunduh dari halaman 1***")
