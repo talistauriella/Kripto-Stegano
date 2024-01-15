@@ -1,17 +1,31 @@
 import streamlit as st
-import pandas as pd
 from streamlit_option_menu import option_menu
 from io import BytesIO
-from PIL import Image, ImageOps
+from PIL import Image
 import docx2txt
 from docx import Document
 import base64
+import string
+import mysql.connector
+
+#Database Connection
+db_connection = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database="steganografi"
+)
+
+db_cursor = db_connection.cursor()
 
 png_file_path =""
 word_file_path = ""
-def embed_text_to_image(text, image_path, output_path):
-    global png_file_path,word_file_path
-    # Code from RGB to Binary
+
+# machine one
+def embed_text_to_image(text, output_path):
+    global png_file_path, word_file_path
+
+    # png area
     def rgb_to_binary(rgb):
         return ''.join(format(value, '08b') for value in rgb)
 
@@ -33,7 +47,7 @@ def embed_text_to_image(text, image_path, output_path):
                     k = ""
                     i = 0
         return bit
-    
+
     def get_png_resolution(image_path):
         try:
             with Image.open(image_path) as img:
@@ -42,19 +56,14 @@ def embed_text_to_image(text, image_path, output_path):
         except Exception as e:
             print(f"Error: {e}")
             return None
-    
+
     png_binary = extracting_image_rgb(png_file_path)
     resolution = get_png_resolution(png_file_path)
 
-    length = len(png_binary)
-    print(length)
-    for i in range(10):
-        print(png_binary[i])
-
-    # Code from Word to Binary
+    # word area
     def read_docx(file_path):
         doc = Document(file_path)
-        
+
         # Initialize an empty string to store the text
         text_content = ""
 
@@ -68,21 +77,40 @@ def embed_text_to_image(text, image_path, output_path):
         binary_data = ''.join(format(ord(char), '08b') for char in text)
         return binary_data
 
-    word_text = read_docx(word_file_path)
-    word_binary = text_to_binary(word_text)
-
-    # Extract binary from image
-    png_binary = extracting_image_rgb(image_path)
-
-    # Extract binary from Word document
     word_text = read_docx(text)
+    word_text = ''.join(char for char in word_text if char in string.printable)
     word_binary = text_to_binary(word_text)
 
-    # Combine binary data
+    # checking the limit
+    length_count_png_binary = len(png_binary) * 3
+    length_count_word_binary = len(word_binary) * 8
+    length_count_word_binary = length_count_word_binary + 32
+
+    dum_list = []
+    for i in word_binary:
+        dum_list.append(i)
+    word_binary = dum_list
+
+    dum_list = []
+    decimal_number = len(word_binary)
+    binary_string = bin(decimal_number)[2:]
+
+    dum_list = []
+    j = 0
+    for i in range(0, 32):
+        if i < (32-len(binary_string)):
+            dum_list.append('0')
+            continue
+        dum_list.append(binary_string[j])
+        j = j + 1
+    count_word = dum_list
+
+    word_binary = count_word + word_binary
+
+    # steganografi program
     new_png_binary = []
     length_png = len(png_binary)
     length_word = len(word_binary)
-
     for i in range(length_word):
         str_png_binary = png_binary[i]
         new_binary = str_png_binary[:-1] + word_binary[i]
@@ -91,7 +119,7 @@ def embed_text_to_image(text, image_path, output_path):
     for i in range(length_word, length_png):
         new_png_binary.append(png_binary[i])
 
-    # Code for construct binary png to png
+        #  Code for construct binary png to png
     def create_image_from_pixel_data(pixel_data, width, height):
         # Create a new image with the specified width and height
         image = Image.new('RGB', (width, height))
@@ -121,107 +149,131 @@ def embed_text_to_image(text, image_path, output_path):
     image = create_image_from_pixel_data(pixel_data, resolution[0], resolution[1])
     image.save(output_path)
 
-#Halaman 2
-    # Function to convert binary to text
+def checking_limit(text):
+    global png_file_path, word_file_path
+
+    # png area
+    def rgb_to_binary(rgb):
+        return ''.join(format(value, '08b') for value in rgb)
+
+    def extracting_image_rgb(img_path):
+        image = Image.open(img_path)
+        pixel_values = list(image.getdata())
+        binary_pixel_values = [rgb_to_binary(rgb) for rgb in pixel_values]
+        image.close()
+        bit = []
+        k = ""
+        i = 0
+
+        for three_binary in binary_pixel_values:
+            for binary in three_binary:
+                i+=1
+                k+=binary
+                if i == 8 or i == 16 or i == 24:
+                    bit.append(k)
+                    k = ""
+                    i = 0
+        return bit
+
+    def get_png_resolution(image_path):
+        try:
+            with Image.open(image_path) as img:
+                width, height = img.size
+                return width, height
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+
+    png_binary = extracting_image_rgb(png_file_path)
+    resolution = get_png_resolution(png_file_path)
+
+    # word area
+    def read_docx(file_path):
+        doc = Document(file_path)
+
+        # Initialize an empty string to store the text
+        text_content = ""
+
+        # Iterate through paragraphs and add text to the string
+        for paragraph in doc.paragraphs:
+            text_content += paragraph.text + "\n"
+
+        return text_content
+
+    def text_to_binary(text):
+        binary_data = ''.join(format(ord(char), '08b') for char in text)
+        return binary_data
+
+    word_text = read_docx(text)
+    word_text = ''.join(char for char in word_text if char in string.printable)
+    word_binary = text_to_binary(word_text)
+
+    # checking the limit
+    length_count_png_binary = len(png_binary) * 3
+    length_count_word_binary = len(word_binary) * 8
+    length_count_word_binary = length_count_word_binary + 32
+
+    output = 0
+    if length_count_png_binary < length_count_word_binary:
+        output = 1
+
+    return output
+
+# machine two
+# 2nd pages
+def embed_image_to_text(image_path):
+    def rgb_to_binary(rgb):
+        return ''.join(format(value, '08b') for value in rgb)
+
+    def extracting_image_rgb(image):
+        try:
+            if isinstance(image, Image.Image):
+                pixel_values = list(image.getdata())
+                binary_pixel_values = [rgb_to_binary(rgb) for rgb in pixel_values]
+
+                bit = []
+                k = ""
+                i = 0
+
+                for three_binary in binary_pixel_values:
+                    for binary in three_binary:
+                        i+=1
+                        k+=binary
+                        if i == 8 or i == 16 or i == 24:
+                            bit.append(k)
+                            k = ""
+                            i = 0
+                return bit
+            else:
+                raise ValueError("Objek gambar tidak valid")
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+
+    png_binary = extracting_image_rgb(image_path)
+
+    count_binary = ""
+    for i in range(0, 32):
+        str_png_binary = png_binary[i]
+        count_binary+=(str_png_binary[-1])
+
+    binary_string = count_binary
+    count_decimal = int(binary_string, 2)
+
+    # Code to get every LSB and put it together
+    word_binary = ""
+    for i in range(32, count_decimal+32):
+        str_png_binary = png_binary[i]
+        word_binary+=(str_png_binary[-1])
+
     def binary_to_text(binary_string):
-        text = ''.join(chr(int(binary_string[i:i + 8], 2)) for i in range(0, len(binary_string), 8))
+        text = ''.join(chr(int(binary_string[i:i+8], 2)) for i in range(0, len(binary_string), 8))
         return text
-    
-    # Function to embed text into an image
-    def embed_text_to_image(text, image_path, output_path):
-        binary_text = ''.join(format(ord(char), '08b') for char in text)
-        png_binary = extracting_image_rgb(image_path)
 
-        new_png_binary = []
-        length_png = len(png_binary)
-        length_text = len(binary_text)
+    # Example usage
+    return binary_to_text(word_binary)
 
-        for i in range(length_text):
-            str_png_binary = png_binary[i]
-            new_binary = str_png_binary[:-1] + binary_text[i]
-            new_png_binary.append(new_binary)
-
-        for i in range(length_text, length_png):
-            new_png_binary.append(png_binary[i])
-
-        rgb_values = []
-        dum_list = []
-
-        for i in range(0, len(new_png_binary), 3):
-            dum_list = []
-            for j in range(3):
-                dum_list.append(int(new_png_binary[i + j], 2))
-            rgb_values.append(dum_list)
-
-        pixel_data = [value for rgb_list in rgb_values for value in rgb_list]
-
-        image = Image.new('RGB', (400, 400))
-        pixels = image.load()
-
-        for y in range(400):
-            for x in range(400):
-                pixel_index = y * 400 * 3 + x * 3
-                pixels[x, y] = (pixel_data[pixel_index], pixel_data[pixel_index + 1], pixel_data[pixel_index + 2])
-
-        image.save(output_path)
-    # Code from PNG to Binary
-def rgb_to_binary(rgb):
-    return ''.join(format(value, '08b') for value in rgb)
-
-def extracting_image_rgb(image):
-    try:
-        # Jika gambar adalah objek PIL, kita dapat melanjutkan
-        if isinstance(image, Image.Image):
-            pixel_values = list(image.getdata())
-            binary_pixel_values = [rgb_to_binary(rgb) for rgb in pixel_values]
-
-            bit = []
-            k = ""
-            i = 0
-
-            for three_binary in binary_pixel_values:
-                for binary in three_binary:
-                    i += 1
-                    k += binary
-                    if i == 8 or i == 16 or i == 24:
-                        bit.append(k)
-                        k = ""
-                        i = 0
-
-            return bit
-        else:
-            raise ValueError("Objek gambar tidak valid.")
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
-
-def get_png_resolution(image_path):
-    try:
-        with Image.open(image_path) as img:
-            width, height = img.size
-            return width, height
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
-
-def binary_to_text(binary_string):
-    text = ''.join(chr(int(binary_string[i:i + 8], 2)) for i in range(0, len(binary_string), 8))
-    return text
-
-def write_text_to_word(text, output_path='output.docx'):
-    # Create a new Word document
-    doc = Document()
-
-    # Add the user-input text to the document
-    doc.add_paragraph(text)
-
-    # Save the document to the specified path
-    doc.save(output_path)
-    with open(output_path, 'rb') as file:
-        byte_data = file.read()
-    return byte_data if byte_data else b''
-
-#Main Streamlit APP
+# main
 st.set_page_config(
         page_title="STEGO~",
         page_icon=":key",
@@ -272,19 +324,33 @@ elif(selected=="Halaman 1"):
                 with Image.open(temp_image_path) as img:
                     width, height = img.size
 
-                # Embed text to image
-                output_image_path = "output_image.png"
-                embed_text_to_image(temp_text_path, temp_image_path, output_image_path)
+                boolean_1stmachine = checking_limit(temp_text_path)
+                if boolean_1stmachine == 1:
+                    st.write("please use bigger image")
+                else:
+                    # Embed text to image
+                    output_image_path = "output_image.png"
+                    embed_text_to_image(temp_text_path, output_image_path)
 
-                # Display the output image
-                st.image(output_image_path, caption="Gambar yang telah disisipi teks", use_column_width=True)
-                # Download button for the output image
-                output_image_download_label = "Download Output Image"
-                output_image_base64 = base64.b64encode(open(output_image_path, "rb").read()).decode()
-                href = f'<a href="data:file/png;base64,{output_image_base64}" download="output_image.png">{output_image_download_label}</a>'
-                st.markdown(href, unsafe_allow_html=True)                
+                    db_cursor.execute('''
+                        INSERT INTO embedded_images (image_name, text_name, output_image_path)
+                                    VALUES (%s, %s, %s)
+                                    ''', (uploaded_image.name, uploaded_text.name, output_image_path))
+
+                    db_connection.commit()
+
+                    # Display the output image
+                    st.image(output_image_path, caption="Gambar yang telah disisipi teks", use_column_width=True)
+                    # Download button for the output image
+                    output_image_download_label = "Download Output Image"
+                    output_image_base64 = base64.b64encode(open(output_image_path, "rb").read()).decode()
+                    href = f'<a href="data:file/png;base64,{output_image_base64}" download="output_image.png">{output_image_download_label}</a>'
+                    st.markdown(href, unsafe_allow_html=True)                
             except Exception as e:
                 st.error(f"Terjadi kesalahan: {e}")
+            finally:
+                db_cursor.close()
+                db_connection.close()
         else:
             st.write("Silakan pilih file gambar (JPG or PNG) dan file teks (DOCX) sebelum menekan tombol Submit.")  
     def process_uploaded_file(uploaded_file):
@@ -302,37 +368,48 @@ elif(selected=="Halaman 1"):
             else:
                 st.write("Tipe file tidak didukung. Harap pilih file dengan tipe docx atau jpg.")
 
-   
 elif(selected=="Halaman 2"):
     st.title("Halaman 2")
     uploaded_file = st.file_uploader("Pilih file JPG or PNG", type=["jpg","png"], accept_multiple_files=False)
-    if st.button("Submit"):
-        # Process the uploaded file
-        def process_uploaded_file(uploaded_file):
+    try:
+        if st.button("Submit"):
             if uploaded_file is not None:
-                if uploaded_file.type == "image/jpeg" or uploaded_file.type == "image/jpg" or uploaded_file.type == "image/png":
+                if uploaded_file.type != "image/png":
+                    st.write("Tipe file tidak didukung. Harap pilih file dengan tipe .png.")
+                else:
                     image = Image.open(uploaded_file)
                     st.image(image, caption="Gambar yang diunggah", use_column_width=True)
-                    png_binary = extracting_image_rgb(image)
 
-                    word_binary = ""
-                    for i in range(0, 1600):
-                        str_png_binary = png_binary[i]
-                        word_binary += str_png_binary[-1]
+                    text = embed_image_to_text(image)
 
-                    text_result = binary_to_text(word_binary)
+                    #Insert data into Mysql Database
+                    db_cursor.execute('''
+                        INSERT INTO embedded_files (output_image_name, output_file_path)
+                        VALUES (%s, %s)
+                    ''', (uploaded_file.name, text))
 
-                    st.success("Word document created successfully.")
+                    db_connection.commit()
 
-                    # Download button for Word document
-                    if st.download_button("Download Word Document", write_text_to_word(text_result), key="download_button"):
-                        pass  # Placeholder for button click event
+                    def write_text_to_word(text, outputh_path='output.docx'):
+                        doc = Document()
+                        doc.add_paragraph(text)
 
-                else:
-                    st.write("Tipe file tidak didukung. Harap pilih file dengan tipe jpg.")
+                        buffer = BytesIO()
+                        doc.save(buffer)
+                        buffer.seek(0)
 
-        # Process the uploaded file
-        process_uploaded_file(uploaded_file)
-        
+                        return buffer
 
+                    buffer = write_text_to_word(text)
+                    st.download_button(
+                        label="Download Word Document",
+                        data=buffer,
+                        file_name='output.docx',
+                        key="download_button"
 
+                    )
+    except Exception as e:
+        st.error(f"Terjadi kesalahan: {e}")
+    finally:
+        db_cursor.close()
+        db_connection.close()
