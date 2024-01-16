@@ -24,7 +24,7 @@ word_file_path = ""
 # machine one
 def embed_text_to_image(text, output_path):
     global png_file_path, word_file_path
-
+    
     # png area
     def rgb_to_binary(rgb):
         return ''.join(format(value, '08b') for value in rgb)
@@ -63,7 +63,7 @@ def embed_text_to_image(text, output_path):
     # word area
     def read_docx(file_path):
         doc = Document(file_path)
-
+        
         # Initialize an empty string to store the text
         text_content = ""
 
@@ -80,11 +80,6 @@ def embed_text_to_image(text, output_path):
     word_text = read_docx(text)
     word_text = ''.join(char for char in word_text if char in string.printable)
     word_binary = text_to_binary(word_text)
-
-    # checking the limit
-    length_count_png_binary = len(png_binary) * 3
-    length_count_word_binary = len(word_binary) * 8
-    length_count_word_binary = length_count_word_binary + 32
 
     dum_list = []
     for i in word_binary:
@@ -151,7 +146,7 @@ def embed_text_to_image(text, output_path):
 
 def checking_limit(text):
     global png_file_path, word_file_path
-
+    
     # png area
     def rgb_to_binary(rgb):
         return ''.join(format(value, '08b') for value in rgb)
@@ -175,22 +170,12 @@ def checking_limit(text):
                     i = 0
         return bit
 
-    def get_png_resolution(image_path):
-        try:
-            with Image.open(image_path) as img:
-                width, height = img.size
-                return width, height
-        except Exception as e:
-            print(f"Error: {e}")
-            return None
-
     png_binary = extracting_image_rgb(png_file_path)
-    resolution = get_png_resolution(png_file_path)
 
     # word area
     def read_docx(file_path):
         doc = Document(file_path)
-
+        
         # Initialize an empty string to store the text
         text_content = ""
 
@@ -216,7 +201,7 @@ def checking_limit(text):
     output = 0
     if length_count_png_binary < length_count_word_binary:
         output = 1
-
+    
     return output
 
 # machine two
@@ -273,6 +258,54 @@ def embed_image_to_text(image_path):
     # Example usage
     return binary_to_text(word_binary)
 
+def checking_limit2(image_path):
+    def rgb_to_binary(rgb):
+        return ''.join(format(value, '08b') for value in rgb)
+
+    def extracting_image_rgb(image):
+        try:
+            if isinstance(image, Image.Image):
+                pixel_values = list(image.getdata())
+                binary_pixel_values = [rgb_to_binary(rgb) for rgb in pixel_values]
+
+                bit = []
+                k = ""
+                i = 0
+
+                for three_binary in binary_pixel_values:
+                    for binary in three_binary:
+                        i+=1
+                        k+=binary
+                        if i == 8 or i == 16 or i == 24:
+                            bit.append(k)
+                            k = ""
+                            i = 0
+                return bit
+            else:
+                raise ValueError("Objek gambar tidak valid")
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+
+    png_binary = extracting_image_rgb(image_path)
+
+    count_binary = ""
+    for i in range(0, 32):
+        str_png_binary = png_binary[i]
+        count_binary+=(str_png_binary[-1])
+
+    binary_string = count_binary
+    count_decimal = int(binary_string, 2)
+
+    length_png_binary = len(png_binary)
+    
+    output = 0
+    if length_png_binary-32 < count_decimal:
+        output = 1
+    
+    return output
+    
+
 # main
 st.set_page_config(
         page_title="STEGO~",
@@ -282,7 +315,7 @@ st.set_page_config(
 
 with st.sidebar:
     selected = option_menu("Main Menu", ["About", "Enkripsi", "Dekripsi"],
-    icons=['house', 'gear', 'key'], menu_icon="cast", default_index=1)
+    icons=['house', 'gear', 'key'], menu_icon="cast", default_index=0)
 if(selected=="About"):
     st.title("About Steganografi Paper")
     st.text_area("Definisi Steganografi",
@@ -307,7 +340,6 @@ elif(selected=="Enkripsi"):
     st.title("Enkripsi")
     st.markdown("Penyisipan setiap isi teks pada file DOCX (dalam bentuk binary) ke dalam setiap pixel pada file PNG atau JPG")
     st.markdown("***Input File PNG atau JPG dan File DOCX***")
-
     # Membuat komponen untuk mengunggah file dengan dukungan untuk beberapa file.
     uploaded_image = st.file_uploader("Pilih file Foto", type=["jpg", "png"], accept_multiple_files=False)
     uploaded_text = st.file_uploader("Pilih file DOCX", type=["docx"], accept_multiple_files=False)
@@ -354,9 +386,6 @@ elif(selected=="Enkripsi"):
                     st.markdown(href, unsafe_allow_html=True)                
             except Exception as e:
                 st.error(f"Terjadi kesalahan: {e}")
-            finally:
-                db_cursor.close()
-                db_connection.close()
         else:
             st.write("Silakan pilih file gambar (JPG or PNG) dan file teks (DOCX) sebelum menekan tombol Submit.")  
     def process_uploaded_file(uploaded_file):
@@ -378,7 +407,7 @@ elif(selected=="Dekripsi"):
     st.title("Dekripsi")
     st.markdown("Mengekstrak kembali isi dari file PNG atau JPG yang telah disisipkan")
     st.markdown("***Input File PNG yang telah diunduh dari halaman 1***")
-    uploaded_file = st.file_uploader("Pilih file PNG", type=["png"], accept_multiple_files=False)
+    uploaded_file = st.file_uploader("Pilih file JPG or PNG", type=["jpg","png"], accept_multiple_files=False)
     try:
         if st.button("Submit"):
             if uploaded_file is not None:
@@ -387,35 +416,39 @@ elif(selected=="Dekripsi"):
                 else:
                     image = Image.open(uploaded_file)
                     st.image(image, caption="Gambar yang diunggah", use_column_width=True)
+                    boolean_2ndmachine = checking_limit2(image)
 
-                    text = embed_image_to_text(image)
+                    if boolean_2ndmachine == 1:
+                        st.write("Tidak ada teks yang disisipkan")
+                    else:                
+                        text = embed_image_to_text(image)
 
-                    #Insert data into Mysql Database
-                    db_cursor.execute('''
-                        INSERT INTO embedded_files (output_image_name, output_file_path)
-                        VALUES (%s, %s)
-                    ''', (uploaded_file.name, text))
+                        #Insert data into Mysql Database
+                        db_cursor.execute('''
+                            INSERT INTO embedded_files (output_image_name, output_file_path)
+                            VALUES (%s, %s)
+                        ''', (uploaded_file.name, text))
 
-                    db_connection.commit()
+                        db_connection.commit()
 
-                    def write_text_to_word(text, outputh_path='output.docx'):
-                        doc = Document()
-                        doc.add_paragraph(text)
+                        def write_text_to_word(text, outputh_path='output.docx'):
+                            doc = Document()
+                            doc.add_paragraph(text)
 
-                        buffer = BytesIO()
-                        doc.save(buffer)
-                        buffer.seek(0)
+                            buffer = BytesIO()
+                            doc.save(buffer)
+                            buffer.seek(0)
 
-                        return buffer
+                            return buffer
 
-                    buffer = write_text_to_word(text)
-                    st.download_button(
-                        label="Download Word Document",
-                        data=buffer,
-                        file_name='output.docx',
-                        key="download_button"
-
-                    )
+                        buffer = write_text_to_word(text)
+                        st.download_button(
+                            label="Download Word Document",
+                            data=buffer,
+                            file_name='output.docx',
+                            key="download_button"
+                        )
+                    
     except Exception as e:
         st.error(f"Terjadi kesalahan: {e}")
     finally:
