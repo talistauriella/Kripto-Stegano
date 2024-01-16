@@ -281,15 +281,18 @@ st.set_page_config(
 )
 
 with st.sidebar:
-    selected = option_menu("Main Menu", ["About", "Penyisipan", "Pengekstrakan"],
+    selected = option_menu("Main Menu", ["About", "Enkripsi", "Dekripsi"],
     icons=['house', 'gear', 'key'], menu_icon="cast", default_index=1)
 if(selected=="About"):
     st.title("About Steganografi Paper")
-    st.caption("Ini adalah halaman utama web")
     st.text_area("Definisi Steganografi",
                     "Menurut Munir (2009), Steganografi adalah ilmu dan seni menyembunyikan"
-                    "pesan rahasia (hiding message) sedemikian sehingga keberadaan (eksistensi)"
-                    "pesan yang tidak terdeteksi oleh indera manusia." )
+                    " pesan rahasia (hiding message) sedemikian sehingga keberadaan (eksistensi)"
+                    " pesan yang tidak terdeteksi oleh indera manusia." )
+    st.markdown("Steganografi Paper digunakan untuk mengamankan paper Anda dengan steganografi LSB, menyisipkan isi paper ke dalam Image menggunakan LSB")
+    st.subheader("Petunjuk")
+    st.markdown("**Halaman Enkripsi** untuk menyisipkan isi teks dalam paper ke dalam Image dengan metode Least Significant Bit")
+    st.markdown("**Halaman Dekripsi** untuk dekode data yang telah disisipkan ke dalam Image dan diproses kembali sehingga data dalam Image dapat dibaca dalam bentuk file docx")
     st.subheader("Cara Kerja")
     st.markdown("***Cara Kerja Steganografi***")
     st.markdown("1. Input Image dan Input Text")
@@ -300,8 +303,8 @@ if(selected=="About"):
     st.markdown("2. Menggunakan LSB untuk menyisipkan setiap digit bit text ke Image")
     st.markdown("3. Menciptakan kembali Image yang telah disisipi bit di akhir bitnya")
 
-elif(selected=="Penyisipan"):
-    st.title("Halaman 1")
+elif(selected=="Enkripsi"):
+    st.title("Enkripsi")
     st.markdown("Penyisipan setiap isi teks pada file DOCX (dalam bentuk binary) ke dalam setiap pixel pada file PNG atau JPG")
     st.markdown("***Input File PNG atau JPG dan File DOCX***")
 
@@ -371,11 +374,11 @@ elif(selected=="Penyisipan"):
             else:
                 st.write("Tipe file tidak didukung. Harap pilih file dengan tipe docx atau jpg.")
 
-elif(selected=="Pengekstrakan"):
-    st.title("Halaman 2")
+elif(selected=="Dekripsi"):
+    st.title("Dekripsi")
     st.markdown("Mengekstrak kembali isi dari file PNG atau JPG yang telah disisipkan")
-    st.markdown("***Input File PNG atau JPG yang telah diunduh dari halaman 1***")
-    uploaded_file = st.file_uploader("Pilih file JPG or PNG", type=["jpg","png"], accept_multiple_files=False)
+    st.markdown("***Input File PNG yang telah diunduh dari halaman 1***")
+    uploaded_file = st.file_uploader("Pilih file PNG", type=["png"], accept_multiple_files=False)
     try:
         if st.button("Submit"):
             if uploaded_file is not None:
